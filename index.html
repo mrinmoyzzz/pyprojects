@@ -24,7 +24,7 @@
             border-radius: 15px;
             padding: 20px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-            display: none; /* Initially hidden */
+            display: none;
         }
 
         #city-input {
@@ -67,7 +67,7 @@
 <body>
     <div class="container">
         <h1>Weather App</h1>
-        <input type="text" id="city-input" placeholder="Enter city name" />
+        <input type="text" id="city-input" placeholder="Enter city name (e.g., Berlin)" />
         <button id="city-input-btn">Get Weather</button>
         <div id="weather-info" class="weather-card">
             <h2 id="city-name"></h2>
@@ -79,41 +79,42 @@
         </div>
     </div>
     <script>
-        const url = 'http://api.weatherapi.com/v1/current.json';
-        const apiKey = '6943e1ffb918456090b51029251904'; // Your API key
-
-        document.getElementById('city-input-btn').addEventListener('click', function() {
-            const cityName = document.getElementById('city-input').value;
-            if (cityName) {
-                fetchWeatherData(cityName);
-            } else {
+        document.getElementById('city-input-btn').addEventListener('click', async function () {
+            const city = document.getElementById('city-input').value;
+            if (!city) {
                 alert('Please enter a city name.');
+                return;
+            }
+
+            try {
+                // Get coordinates from OpenStreetMap (Nominatim)
+                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${city}`);
+                const geoData = await geoRes.json();
+                if (geoData.length === 0) throw new Error('City not found.');
+
+                const lat = geoData[0].lat;
+                const lon = geoData[0].lon;
+
+                // Call Open-Meteo API
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weather_code,wind_speed_10m&current_weather=true`);
+                const weatherData = await weatherRes.json();
+
+                const current = weatherData.current_weather;
+
+                document.getElementById('city-name').innerText = city;
+                document.getElementById('temperature').innerText = `${current.temperature} °C`;
+                document.getElementById('description').innerText = `Weather Code: ${current.weathercode}`;
+                document.getElementById('wind-speed').innerText = `Wind Speed: ${current.windspeed} km/h`;
+                document.getElementById('air-quality').innerText = "Air Quality: (Not available from Open-Meteo)";
+                document.getElementById('weather-icon').src = 'https://cdn-icons-png.flaticon.com/512/1163/1163661.png'; // Placeholder icon
+                document.getElementById('weather-info').style.display = 'block';
+
+            } catch (err) {
+                console.error(err);
+                alert('Error fetching weather data.');
             }
         });
-
-        async function fetchWeatherData(city) {
-            const response = await fetch(`${url}?key=${apiKey}&q=${city}&aqi=yes`);
-            const data = await response.json();
-            if (response.ok) {
-                displayWeatherData(data);
-            } else {
-                alert('City not found. Please try again.');
-            }
-        }
-
-        function displayWeatherData(data) {
-            document.getElementById('city-name').innerText = data.location.name;
-            document.getElementById('temperature').innerText = `${data.current.temp_c} °C`;
-            document.getElementById('description').innerText = data.current.condition.text;
-            document.getElementById('wind-speed').innerText = `Wind Speed: ${data.current.wind_kph} kph`;
-            document.getElementById('air-quality').innerText = `Air Quality: ${data.current.air_quality['us-epa-index']}`;
-
-            // Set the weather icon
-            document.getElementById('weather-icon').src = data.current.condition.icon;
-
-            // Show the weather info
-            document.getElementById('weather-info').style.display = 'block';
-        }
     </script>
+    <marquee>this a site by mrinmoy using simple api tools </marquee>
 </body>
 </html>
