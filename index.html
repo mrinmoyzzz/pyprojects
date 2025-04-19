@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        .weather-card {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            display: none; /* Initially hidden */
+        }
+
+        #city-input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 60%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #city-input-btn {
+            padding: 10px;
+            background-color: #0072ff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #weather-icon {
+            width: 80px;
+            height: 80px;
+        }
+
+        #temperature {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        #description {
+            font-size: 18px;
+        }
+
+        #wind-speed, #air-quality {
+            font-size: 16px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Weather App</h1>
+        <input type="text" id="city-input" placeholder="Enter city name" />
+        <button id="city-input-btn">Get Weather</button>
+        <div id="weather-info" class="weather-card">
+            <h2 id="city-name"></h2>
+            <img id="weather-icon" src="" alt="Weather Icon" />
+            <p id="temperature"></p>
+            <p id="description"></p>
+            <p id="wind-speed"></p>
+            <p id="air-quality"></p>
+        </div>
+    </div>
+    <script>
+        const url = 'http://api.weatherapi.com/v1/current.json';
+        const apiKey = '6943e1ffb918456090b51029251904'; // Your API key
+
+        document.getElementById('city-input-btn').addEventListener('click', function() {
+            const cityName = document.getElementById('city-input').value;
+            if (cityName) {
+                fetchWeatherData(cityName);
+            } else {
+                alert('Please enter a city name.');
+            }
+        });
+
+        async function fetchWeatherData(city) {
+            const response = await fetch(`${url}?key=${apiKey}&q=${city}&aqi=yes`);
+            const data = await response.json();
+            if (response.ok) {
+                displayWeatherData(data);
+            } else {
+                alert('City not found. Please try again.');
+            }
+        }
+
+        function displayWeatherData(data) {
+            document.getElementById('city-name').innerText = data.location.name;
+            document.getElementById('temperature').innerText = `${data.current.temp_c} °C`;
+            document.getElementById('description').innerText = data.current.condition.text;
+            document.getElementById('wind-speed').innerText = `Wind Speed: ${data.current.wind_kph} kph`;
+            document.getElementById('air-quality').innerText = `Air Quality: ${data.current.air_quality['us-epa-index']}`;
+
+            // Set the weather icon
+            document.getElementById('weather-icon').src = data.current.condition.icon;
+
+            // Show the weather info
+            document.getElementById('weather-info').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
